@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="src-test"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="lib/jersey-client.jar"/>
+	<classpathentry kind="lib" path="lib/javax.ws.rs-api-2.1.jar"/>
+	<classpathentry kind="lib" path="lib/jersey-common.jar"/>
+	<classpathentry kind="lib" path="lib/json-20180130.jar"/>
+	<classpathentry kind="lib" path="lib/jersey-hk2.jar"/>
+	<classpathentry kind="lib" path="lib/javax.annotation-api-1.2.jar"/>
+	<classpathentry kind="lib" path="lib/hk2-api-2.5.0-b42.jar"/>
+	<classpathentry kind="lib" path="lib/hk2-utils-2.5.0-b42.jar"/>
+	<classpathentry kind="lib" path="lib/hk2-locator-2.5.0-b42.jar"/>
+	<classpathentry kind="lib" path="lib/javax.inject-2.5.0-b42.jar"/>
+	<classpathentry kind="lib" path="lib/poi-3.17.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-3.17.jar"/>
+	<classpathentry kind="lib" path="lib/xmlbeans-2.6.0.jar"/>
+	<classpathentry kind="lib" path="lib/poi-ooxml-schemas-3.17.jar"/>
+	<classpathentry kind="lib" path="lib/commons-cli-1.4.jar"/>
+	<classpathentry kind="lib" path="lib/flexmark-0.32.20.jar"/>
+	<classpathentry kind="lib" path="lib/flexmark-util-0.32.20.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
