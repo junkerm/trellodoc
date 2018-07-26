@@ -45,6 +45,11 @@ public class TrelloDoc {
 		System.out.println("finished");
 	}
 
+	/**
+	 * @param args
+	 * @return
+	 * @throws ParseException
+	 */
 	private static CommandLine parseCommandLineArgs(String[] args) throws ParseException {
 		Option trelloKey = OptionBuilder.withArgName("key").hasArg().isRequired().create("trelloKey");
 		Option trelloToken = OptionBuilder.withArgName("token").isRequired().hasArg().create("trelloToken");

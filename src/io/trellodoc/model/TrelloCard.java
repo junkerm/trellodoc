@@ -4,6 +4,15 @@ public class TrelloCard {
 	private int id;
 	private String name;
 	private String description;
+	private String labels;
+	
+	public String getLabels() {
+		return labels;
+	}
+	
+	public void setLabels(String labels) {
+		this.labels = labels;
+	}
 
 	public int getId() {
 		return id;
@@ -28,5 +37,7 @@ public class TrelloCard {
 	public void setDescription(String description) {
 		this.description = description;
 	}
+
+
 
 }

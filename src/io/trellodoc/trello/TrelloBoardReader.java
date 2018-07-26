@@ -46,6 +46,13 @@ public class TrelloBoardReader {
 		card.setName(cardObject.getString("name"));
 		card.setDescription(cardObject.getString("desc"));
 		card.setId(cardObject.getInt("idShort"));
+		JSONArray labelsJSON = cardObject.getJSONArray("labels");
+		String labels = "";
+		for (int i = 0; i < labelsJSON.length(); i++) {
+			JSONObject labelJSON = labelsJSON.getJSONObject(i);
+			labels = labels + labelJSON.getString("name") + " ";
+		}
+		card.setLabels(labels);
 		return card;
 	}
 
