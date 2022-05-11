@@ -9,8 +9,6 @@ import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.ArrayList; //new
-import java.util.Arrays; //new
 
 /*import org.apache.poi.xwpf.usermodel.XWPFAbstractNum;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -20,13 +18,19 @@ import org.apache.poi.xwpf.usermodel.XWPFRun;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableCell;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;*/
-import org.apache.poi.xwpf.usermodel.*; //new
+//new
+import org.apache.poi.xwpf.usermodel.XWPFAbstractNum;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFNumbering;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlException;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTAbstractNum;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTNumbering;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.STNumberFormat;
-import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTLvl;
 
 import com.vladsch.flexmark.ast.BulletList;
 import com.vladsch.flexmark.ast.BulletListItem;
@@ -60,39 +64,39 @@ public class WordWriter {
 			new VisitHandler<>(OrderedListItem.class, this::visitOrderedListItem));
 	private boolean firstParagraph;
 	private boolean currentIsListItem;
-	private int numId=100;
+	private int numId = 100;
 
 	public WordWriter(String templateUrl) throws TrelloDocException {
-		this.document = getTemplateDocument(templateUrl);
-		this.hookParagraph = getHookParagraph(document);
+		document = getTemplateDocument(templateUrl);
+		hookParagraph = getHookParagraph(document);
 	}
 
 	public void visitEmphasis(Emphasis arg0) {
-		XWPFRun run = this.currentParagraph.createRun();
+		XWPFRun run = currentParagraph.createRun();
 		run.setItalic(true);
 		run.setText(arg0.getChildChars().toString());
 	}
 
 	public void visitParagraph(Paragraph par) {
-		if (this.firstParagraph) {
-			this.firstParagraph = false;
+		if (firstParagraph) {
+			firstParagraph = false;
 		} else {
-			this.currentParagraph = this.currentCell.addParagraph();
+			currentParagraph = currentCell.addParagraph();
 		}
-		if (this.currentIsListItem) {
-			this.currentParagraph.setNumID(this.currentNumId);
+		if (currentIsListItem) {
+			currentParagraph.setNumID(currentNumId);
 		}
 		visitor.visitChildren(par);
 	}
 
 	public void visitText(Text arg0) {
-		XWPFRun run = this.currentParagraph.createRun();
+		XWPFRun run = currentParagraph.createRun();
 		run.setText(arg0.getChars().toString());
 	}
 
 	public void visitBulletList(BulletList list) {
 		try {
-			this.currentNumId = createNumbering();
+			currentNumId = createNumbering();
 			visitor.visitChildren(list);
 		} catch (XmlException e) {
 			System.err.println("Error while creating numbering.");
@@ -100,14 +104,14 @@ public class WordWriter {
 	}
 
 	public void visitBulletListItem(BulletListItem listItem) {
-		this.currentIsListItem = true;
+		currentIsListItem = true;
 		visitor.visitChildren(listItem);
-		this.currentIsListItem = false;
+		currentIsListItem = false;
 	}
-	
+
 	public void visitOrderedList(OrderedList list) {
 		try {
-			this.currentNumId = createNumbering();
+			currentNumId = createNumbering();
 			visitor.visitChildren(list);
 		} catch (XmlException e) {
 			System.err.println("Error while creating numbering.");
@@ -115,14 +119,13 @@ public class WordWriter {
 	}
 
 	public void visitOrderedListItem(OrderedListItem listItem) {
-		this.currentIsListItem = true;
+		currentIsListItem = true;
 		visitor.visitChildren(listItem);
-		this.currentIsListItem = false;
+		currentIsListItem = false;
 	}
-	
 
 	public void writeTo(String targetUrl, List<TrelloList> trelloLists, String headerStyle) throws TrelloDocException {
-		XmlCursor cursor = this.hookParagraph.getCTP().newCursor();
+		XmlCursor cursor = hookParagraph.getCTP().newCursor();
 		for (TrelloList list : trelloLists) {
 			XWPFParagraph listParagraph = document.insertNewParagraph(cursor);
 			listParagraph.setStyle(headerStyle);
@@ -132,10 +135,10 @@ public class WordWriter {
 			writeCards(cursor, list);
 		}
 
-		removeParagraph(this.hookParagraph);
+		removeParagraph(hookParagraph);
 
 		try {
-			this.document.write(new FileOutputStream(new File(new URI(targetUrl))));
+			document.write(new FileOutputStream(new File(new URI(targetUrl))));
 		} catch (IOException | URISyntaxException e) {
 			System.err.println("Could not write to file " + targetUrl);
 			throw new TrelloDocException(e);
@@ -149,23 +152,23 @@ public class WordWriter {
 		Parser parser = Parser.builder(options).build();
 
 		for (TrelloCard card : list.getCards()) {
-			if (card.getLabels().contains("Baseline 4") || card.getLabels().contains("Rejected")) {
-				break; }
+			if (card.getLabels().contains("Rejected")) {
+				continue;
+			}
 			document.insertNewParagraph(cursor);
 			cursor.toNextToken();
 			XWPFTable table = document.insertNewTbl(cursor);
-			
+
 			if (card.getLabels() == "") {
 				XWPFTableRow row1 = table.getRow(0);
 				row1.getCell(0).setText("ID");
 				row1.addNewTableCell().setText(Integer.toString(card.getId()));
-			}
-			else {
+			} else {
 				XWPFTableRow row0 = table.getRow(0);
-				row0.getCell(0).setText("Label"); //new
-				row0.addNewTableCell().setText(card.getLabels()); //new
-			
-				XWPFTableRow row1 = table.createRow(); //new
+				row0.getCell(0).setText("Label"); // new
+				row0.addNewTableCell().setText(card.getLabels()); // new
+
+				XWPFTableRow row1 = table.createRow(); // new
 				row1.getCell(0).setText("ID");
 				row1.getCell(1).setText(Integer.toString(card.getId()));
 			}
@@ -175,24 +178,24 @@ public class WordWriter {
 			row2.getCell(1).setText(card.getName());
 
 			String description = card.getDescription();
-			
+
 			Document userStory = parser.parse(description.split("Akzeptanzkriterien:")[0]);
 			XWPFTableRow row3 = table.createRow();
 			row3.getCell(0).setText("User Story");
-			this.currentCell = row3.getCell(1);
-			this.currentParagraph = row3.getCell(1).getParagraphs().get(0);
-			this.firstParagraph = true;
+			currentCell = row3.getCell(1);
+			currentParagraph = row3.getCell(1).getParagraphs().get(0);
+			firstParagraph = true;
 			visitor.visit(userStory);
-			
+
 			if (description.split("Akzeptanzkriterien:").length > 1) {
 				Document akzeptanzkriterien = parser.parse(description.split("Akzeptanzkriterien:")[1]);
 				XWPFTableRow row4 = table.createRow();
 				row4.getCell(0).setText("Akzeptanzkriterien");
-				this.currentCell = row4.getCell(1);
-				this.currentParagraph = row4.getCell(1).getParagraphs().get(0);
-				this.firstParagraph = true;
+				currentCell = row4.getCell(1);
+				currentParagraph = row4.getCell(1).getParagraphs().get(0);
+				firstParagraph = true;
 				visitor.visit(akzeptanzkriterien);
-				}
+			}
 
 			cursor.toNextToken();
 		}
@@ -200,35 +203,40 @@ public class WordWriter {
 	}
 
 	private BigInteger createNumbering() throws XmlException {
-		//XML for Bullet Points:
-		/*String cTAbstractNumBulletXML = "<w:abstractNum xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:abstractNumId=\"0\">"
-				+ "<w:multiLevelType w:val=\"hybridMultilevel\"/>"
-				+ "<w:lvl w:ilvl=\"0\"><w:start w:val=\"1\"/><w:numFmt w:val=\"bullet\"/><w:lvlText w:val=\"\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr><w:rPr><w:rFonts w:ascii=\"Symbol\" w:hAnsi=\"Symbol\" w:hint=\"default\"/></w:rPr></w:lvl>"
-				+ "<w:lvl w:ilvl=\"1\" w:tentative=\"1\"><w:start w:val=\"1\"/><w:numFmt w:val=\"bullet\"/><w:lvlText w:val=\"o\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"1440\" w:hanging=\"360\"/></w:pPr><w:rPr><w:rFonts w:ascii=\"Courier New\" w:hAnsi=\"Courier New\" w:cs=\"Courier New\" w:hint=\"default\"/></w:rPr></w:lvl>"
-				+ "<w:lvl w:ilvl=\"2\" w:tentative=\"1\"><w:start w:val=\"1\"/><w:numFmt w:val=\"bullet\"/><w:lvlText w:val=\"\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"2160\" w:hanging=\"360\"/></w:pPr><w:rPr><w:rFonts w:ascii=\"Wingdings\" w:hAnsi=\"Wingdings\" w:hint=\"default\"/></w:rPr></w:lvl>"
-				+ "</w:abstractNum>";*/
-		
-		String cTAbstractNumBulletXML = "<w:abstractNum xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:abstractNumId=\""+ (this.numId) +"\">"
-                + "<w:multiLevelType w:val=\"hybridMultilevel\"/>"
-                + "<w:lvl w:ilvl=\"0\"><w:start w:val=\"1\"/><w:numFmt w:val=\"decimal\"/><w:lvlRestart w:val=\"1\"/><w:lvlText w:val=\"%1.\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr></w:lvl>"
-                + "<w:lvl w:ilvl=\"1\" w:tentative=\"1\"><w:start w:val=\"1\"/><w:numFmt w:val=\"decimal\"/><w:lvlText w:val=\"%1.%2\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"1440\" w:hanging=\"360\"/></w:pPr></w:lvl>"
-                + "<w:lvl w:ilvl=\"2\" w:tentative=\"1\"><w:start w:val=\"1\"/><w:numFmt w:val=\"decimal\"/><w:lvlText w:val=\"%1.%2.%3\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"2160\" w:hanging=\"360\"/></w:pPr></w:lvl>"
-                + "</w:abstractNum>";
+		// XML for Bullet Points:
+		/*
+		 * String cTAbstractNumBulletXML =
+		 * "<w:abstractNum xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:abstractNumId=\"0\">"
+		 * + "<w:multiLevelType w:val=\"hybridMultilevel\"/>" +
+		 * "<w:lvl w:ilvl=\"0\"><w:start w:val=\"1\"/><w:numFmt w:val=\"bullet\"/><w:lvlText w:val=\"\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr><w:rPr><w:rFonts w:ascii=\"Symbol\" w:hAnsi=\"Symbol\" w:hint=\"default\"/></w:rPr></w:lvl>"
+		 * +
+		 * "<w:lvl w:ilvl=\"1\" w:tentative=\"1\"><w:start w:val=\"1\"/><w:numFmt w:val=\"bullet\"/><w:lvlText w:val=\"o\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"1440\" w:hanging=\"360\"/></w:pPr><w:rPr><w:rFonts w:ascii=\"Courier New\" w:hAnsi=\"Courier New\" w:cs=\"Courier New\" w:hint=\"default\"/></w:rPr></w:lvl>"
+		 * +
+		 * "<w:lvl w:ilvl=\"2\" w:tentative=\"1\"><w:start w:val=\"1\"/><w:numFmt w:val=\"bullet\"/><w:lvlText w:val=\"\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"2160\" w:hanging=\"360\"/></w:pPr><w:rPr><w:rFonts w:ascii=\"Wingdings\" w:hAnsi=\"Wingdings\" w:hint=\"default\"/></w:rPr></w:lvl>"
+		 * + "</w:abstractNum>";
+		 */
+
+		String cTAbstractNumBulletXML = "<w:abstractNum xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\" w:abstractNumId=\""
+				+ (numId) + "\">" + "<w:multiLevelType w:val=\"hybridMultilevel\"/>"
+				+ "<w:lvl w:ilvl=\"0\"><w:start w:val=\"1\"/><w:numFmt w:val=\"decimal\"/><w:lvlRestart w:val=\"1\"/><w:lvlText w:val=\"%1.\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"720\" w:hanging=\"360\"/></w:pPr></w:lvl>"
+				+ "<w:lvl w:ilvl=\"1\" w:tentative=\"1\"><w:start w:val=\"1\"/><w:numFmt w:val=\"decimal\"/><w:lvlText w:val=\"%1.%2\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"1440\" w:hanging=\"360\"/></w:pPr></w:lvl>"
+				+ "<w:lvl w:ilvl=\"2\" w:tentative=\"1\"><w:start w:val=\"1\"/><w:numFmt w:val=\"decimal\"/><w:lvlText w:val=\"%1.%2.%3\"/><w:lvlJc w:val=\"left\"/><w:pPr><w:ind w:left=\"2160\" w:hanging=\"360\"/></w:pPr></w:lvl>"
+				+ "</w:abstractNum>";
 
 		CTNumbering cTNumbering = CTNumbering.Factory.parse(cTAbstractNumBulletXML);
 		CTAbstractNum cTAbstractNum = cTNumbering.getAbstractNumArray(0);
-		
+
 		XWPFAbstractNum abstractNum = new XWPFAbstractNum(cTAbstractNum);
 		XWPFNumbering numbering = document.createNumbering();
 		BigInteger abstractNumID = numbering.addAbstractNum(abstractNum);
-		
-		this.numId++;
+
+		numId++;
 		return numbering.addNum(abstractNumID);
 	}
 
 	private void removeParagraph(XWPFParagraph hookParagraph2) {
-		int pos = this.document.getPosOfParagraph(this.hookParagraph);
-		this.document.removeBodyElement(pos);
+		int pos = document.getPosOfParagraph(hookParagraph);
+		document.removeBodyElement(pos);
 	}
 
 	private XWPFParagraph getHookParagraph(XWPFDocument document) throws TrelloDocException {

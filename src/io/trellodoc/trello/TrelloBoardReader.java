@@ -1,6 +1,7 @@
 package io.trellodoc.trello;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.ws.rs.core.Response.Status;
@@ -17,17 +18,18 @@ public class TrelloBoardReader {
 	private String boardId;
 	private String token;
 	private String key;
+	private List<String> labelWhiteList = Arrays.asList("new", "changed");
 
 	public TrelloBoardReader(String key, String token, String boardId) {
-		this.client = new RestClient(TRELLO_BASE_URL);
+		client = new RestClient(TRELLO_BASE_URL);
 		this.boardId = boardId;
 		this.key = key;
 		this.token = token;
 	}
 
 	public List<TrelloCard> getCards() {
-		RestResult<JSONArray> restResult = client.getList("/1/boards/" + boardId + "/cards", "key", this.key, "token",
-				this.token);
+		RestResult<JSONArray> restResult = client.getList("/1/boards/" + boardId + "/cards", "key", key, "token",
+				token);
 		if (restResult.getResponse().getStatus() == Status.OK.getStatusCode()) {
 			List<TrelloCard> cards = new ArrayList<>();
 			JSONArray cardsArray = restResult.getPayload();
@@ -50,7 +52,10 @@ public class TrelloBoardReader {
 		String labels = "";
 		for (int i = 0; i < labelsJSON.length(); i++) {
 			JSONObject labelJSON = labelsJSON.getJSONObject(i);
-			labels = labels + labelJSON.getString("name") + " ";
+			String labelName = labelJSON.getString("name");
+			if (labelWhiteList.contains(labelName.toLowerCase())) {
+				labels = labels + labelName + " ";
+			}
 		}
 		card.setLabels(labels);
 		return card;
@@ -58,7 +63,7 @@ public class TrelloBoardReader {
 
 	public List<TrelloList> getLists() {
 		RestResult<JSONArray> restResult = client.getList("/1/boards/" + boardId + "/lists", "cards", "open", "key",
-				this.key, "token", this.token);
+				key, "token", token);
 		if (restResult.getResponse().getStatus() == Status.OK.getStatusCode()) {
 			List<TrelloList> lists = new ArrayList<>();
 			JSONArray listsArray = restResult.getPayload();
